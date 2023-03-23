@@ -12,11 +12,4 @@ public class FullOriginDTO
     
     [JsonProperty("dimension")]
     public string Dimension { get; init; }
-
-    public FullOriginDTO(string name, string type, string dimension)
-    {
-        Name = name;
-        Type = type;
-        Dimension = dimension;
-    }
 }

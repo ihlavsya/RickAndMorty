@@ -91,7 +91,7 @@ public class PersonProvider : IPersonProvider
         return ids;
     }
 
-    public async Task<FullOriginDTO?> GetOrigin(string url)
+    private async Task<FullOriginDTO?> GetOrigin(string url)
     {
         var origin = await GetResponseUrl(url);
         if (origin == null)

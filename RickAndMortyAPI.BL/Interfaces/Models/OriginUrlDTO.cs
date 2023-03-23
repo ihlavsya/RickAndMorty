@@ -8,10 +8,4 @@ public class OriginUrlDTO
     public string Name { get; init; }
     [JsonProperty("url")]
     public string Url { get; init; }
-
-    public OriginUrlDTO(string name, string url)
-    {
-        Name = name;
-        Url = url;
-    }
 }

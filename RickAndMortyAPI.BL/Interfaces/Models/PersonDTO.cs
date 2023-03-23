@@ -22,15 +22,4 @@ public class PersonDTO
     public OriginUrlDTO Origin { get; init; }
     
     public FullOriginDTO? FullOrigin { get; set; }
-
-    public PersonDTO(string name, string status, string type, string species, 
-        string gender, OriginUrlDTO originUrlDto)
-    {
-        Name = name;
-        Status = status;
-        Type = type;
-        Species = species;
-        Gender = gender;
-        Origin = originUrlDto;
-    }
 }

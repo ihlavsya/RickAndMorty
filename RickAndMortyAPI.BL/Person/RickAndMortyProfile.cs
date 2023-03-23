@@ -7,8 +7,9 @@ public class RickAndMortyProfile : Profile
 {
     public RickAndMortyProfile()
     {
-        CreateMap<PersonDTO, Person>().
-            ForMember(p => p.Origin, b => b.MapFrom(pd => pd.FullOrigin));
+        CreateMap<PersonDTO, Person>()
+            .ForSourceMember(sourceMember => sourceMember.Origin, opt => opt.DoNotValidate())
+            .ForMember(destinationMember => destinationMember.Origin, opt => opt.MapFrom(pd => pd.FullOrigin));
         CreateMap<FullOriginDTO, Origin>();
     }
 }

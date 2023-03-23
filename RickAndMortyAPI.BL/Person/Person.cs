@@ -7,15 +7,5 @@ public class Person
     public string Species { get; init; }
     public string Type { get; init; }
     public string Gender { get; init; }
-    public Origin Origin { get; init; }
-
-    public Person(string name, string status, string species, string type, string gender, Origin origin)
-    {
-        Name = name;
-        Status = status;
-        Species = species;
-        Type = type;
-        Gender = gender;
-        Origin = origin;
-    }
+    public Origin Origin { get; set; }
 }
