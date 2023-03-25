@@ -1,93 +1,36 @@
 using AutoMapper;
 using Moq;
 using RickAndMortyAPI.BL;
+using RickAndMortyAPI.BL.Externals;
 using RickAndMortyAPI.BL.Interfaces;
 using RickAndMortyAPI.BL.Interfaces.Models;
+using RickAndMortyTests;
 
 namespace RickAndMortyTests;
 
 public class PersonServiceTests
 {
-    private PersonDTO _expectedPersonDTO;
-    private Person _expectedPerson;
     private Mock<IPersonProvider> _mockProvider;
     private IPersonService _personService;
     private Mock<IMapper> _mockMapper;
-    private string _nameRick = "rick";
-    private string _nameString = "string";
-    private string _nameMixup = "mixup";
     public PersonServiceTests()
     {
-        _mockProvider = new Mock<IPersonProvider>();
+        _mockProvider = Consts.GetMockHttpProvider();
+
         _mockMapper = new Mock<IMapper>();
-        _expectedPerson = GetPerson();
-        _expectedPersonDTO = GetPersonDTO();
-        _mockProvider.Setup(provider => provider.GetPerson(_nameRick))
-            .ReturnsAsync(_expectedPersonDTO);
-        
-        _mockProvider.Setup(provider => provider.GetPerson(_nameString))
-            .ReturnsAsync((PersonDTO?) null);
-
-        _mockProvider.Setup(provider => provider.CheckPerson(_nameRick, _nameMixup))
-            .ReturnsAsync(true);
-        _mockProvider.Setup(provider => provider.CheckPerson(_nameRick, _nameString))
-            .ReturnsAsync((bool?) null);
-
-        _mockMapper.Setup(x => x.Map<Person>(_expectedPersonDTO)).Returns(_expectedPerson);
+        _mockMapper.Setup(x => x.Map<Person>(Consts.GetPersonDTO())).Returns(Consts.GetPerson);
         _personService = new PersonService(_mockProvider.Object, _mockMapper.Object);
     }
-
-    private Person GetPerson()
-    {
-        var person = new Person()
-        {
-            Name = "Rick Sanchez",
-            Status = "Alive",
-            Species = "Human",
-            Type = "",
-            Gender = "Male",
-            Origin = new Origin
-            {
-                Name = "Earth (C-137)",
-                Type = "Planet",
-                Dimension = "Dimension C-137",
-            },
-        };
-        return person;
-    }
-    private PersonDTO GetPersonDTO()
-    {
-        var personDTO = new PersonDTO
-        {
-            Name = "Rick Sanchez",
-            Status = "Alive",
-            Species = "Human",
-            Type = "",
-            Gender = "Male",
-            Origin = new OriginUrlDTO
-            {
-                Name = "Earth (C-137)",
-                Url = "url"
-            },
-            FullOrigin = new FullOriginDTO
-            {
-                Name = "Earth (C-137)",
-                Type = "Planet",
-                Dimension = "Dimension C-137"
-            }
-        };
-        return personDTO;
-    }
-
+    
     [Test]
     public async Task MockConfigurationTest()
     {
-        var fromMockObject = await _mockProvider.Object.GetPerson(_nameRick);
+        var fromMockObject = await _mockProvider.Object.GetPerson(Consts.NameRick);
         // Demonstrate that the configuration works
-        Assert.That(fromMockObject, Is.EqualTo(_expectedPersonDTO));
+        Assert.That(fromMockObject, Is.EqualTo(Consts.GetPersonDTO()));
 
         // Verify that the mock was invoked
-        _mockProvider.Verify(provider => provider.GetPerson(_nameRick));
+        _mockProvider.Verify(provider => provider.GetPerson(Consts.NameRick));
     }
     
     [Test]
@@ -95,7 +38,7 @@ public class PersonServiceTests
     {
         var expectedResult = true;
 
-        var actualResult = await _personService.CheckPerson(_nameRick, _nameMixup);
+        var actualResult = await _personService.CheckPerson(Consts.NameRick, Consts.NameMixup);
         
         Assert.That(actualResult, Is.EqualTo(expectedResult));
     }
@@ -105,7 +48,7 @@ public class PersonServiceTests
     {
         bool? expectedResult = null;
 
-        var actualResult = await _personService.CheckPerson(_nameRick, _nameString);
+        var actualResult = await _personService.CheckPerson(Consts.NameRick, Consts.NameString);
         
         Assert.That(actualResult, Is.EqualTo(expectedResult));
     }
@@ -113,9 +56,9 @@ public class PersonServiceTests
     [Test]
     public async Task GetPersonTestReturnsFullPerson()
     {
-        var expectedResult = _mockMapper.Object.Map<Person>(_expectedPersonDTO);
+        var expectedResult = _mockMapper.Object.Map<Person>(Consts.GetPersonDTO());
         
-        var actualResult = await _personService.GetPerson(_nameRick);
+        var actualResult = await _personService.GetPerson(Consts.NameRick);
         
         Assert.That(actualResult, Is.EqualTo(expectedResult));
     }
@@ -125,7 +68,7 @@ public class PersonServiceTests
     {
         Person? expectedResult = null;
         
-        var actualResult = await _personService.GetPerson(_nameString);
+        var actualResult = await _personService.GetPerson(Consts.NameString);
         
         Assert.That(actualResult, Is.EqualTo(expectedResult));
     }

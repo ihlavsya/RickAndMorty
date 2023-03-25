@@ -1,4 +1,5 @@
 using AutoMapper;
+using RickAndMortyAPI.BL.Externals;
 using RickAndMortyAPI.BL.Interfaces;
 using RickAndMortyAPI.BL.Interfaces.Models;
 

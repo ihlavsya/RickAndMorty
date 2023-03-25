@@ -6,7 +6,7 @@ using RickAndMortyAPI.BL.Interfaces;
 
 namespace RickAndMortyAPI.BL.Externals;
 
-public class PersonProvider : IPersonProvider
+public class HttpPersonProvider : IPersonProvider
 {
     private async Task<string?> GetResponseUrl(string url)
     {
@@ -28,7 +28,7 @@ public class PersonProvider : IPersonProvider
 
         return json;
     }
-    public async Task<string?> GetEpisode(string name)
+    private async Task<string?> GetEpisode(string name)
     {
         var json = await GetResponseUrl(
                 $"https://rickandmortyapi.com/api/episode?name={name}");
