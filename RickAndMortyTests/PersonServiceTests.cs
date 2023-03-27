@@ -1,6 +1,7 @@
 using AutoMapper;
 using Moq;
 using RickAndMortyAPI.BL;
+using RickAndMortyAPI.BL.Exceptions;
 using RickAndMortyAPI.BL.Externals;
 using RickAndMortyAPI.BL.Interfaces;
 using RickAndMortyAPI.BL.Interfaces.Models;
@@ -44,13 +45,10 @@ public class PersonServiceTests
     }
     
     [Test]
-    public async Task CheckPersonTestReturnsNull()
+    public async Task CheckPersonTestThrowsDataNotFoundException()
     {
-        bool? expectedResult = null;
-
-        var actualResult = await _personService.CheckPerson(Consts.NameRick, Consts.NameString);
-        
-        Assert.That(actualResult, Is.EqualTo(expectedResult));
+        Assert.That(async () => await _personService.CheckPerson(Consts.NameRick, Consts.NameString), 
+            Throws.TypeOf<DataNotFoundException>());
     }
 
     [Test]
@@ -64,12 +62,9 @@ public class PersonServiceTests
     }
     
     [Test]
-    public async Task GetPersonTestReturnsNull()
+    public async Task GetPersonTestThrowsDataNotFoundException()
     {
-        Person? expectedResult = null;
-        
-        var actualResult = await _personService.GetPerson(Consts.NameString);
-        
-        Assert.That(actualResult, Is.EqualTo(expectedResult));
+        Assert.That(async () => await _personService.GetPerson(Consts.NameString), 
+            Throws.TypeOf<DataNotFoundException>());
     }
 }

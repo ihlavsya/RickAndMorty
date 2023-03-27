@@ -1,6 +1,8 @@
 using System.Net.Http.Headers;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using RickAndMortyAPI.BL.Exceptions;
 using RickAndMortyAPI.BL.Interfaces.Models;
 using RickAndMortyAPI.BL.Interfaces;
 
@@ -8,9 +10,17 @@ namespace RickAndMortyAPI.BL.Externals;
 
 public class HttpPersonProvider : IPersonProvider
 {
-    private async Task<string?> GetResponseUrl(string url)
+    private readonly ILogger<HttpPersonProvider> _logger;
+
+    public HttpPersonProvider(ILogger<HttpPersonProvider> logger)
+    {
+        _logger = logger;
+    }
+
+    private async Task<string> GetResponseUrl(string url)
     {
         using HttpClient client = new();
+        client.BaseAddress = new Uri("https://rickandmortyapi.com/api/");
         client.DefaultRequestHeaders.Accept.Clear();
         client.DefaultRequestHeaders.Accept.Add(
             new MediaTypeWithQualityHeaderValue("application/rickandmorty"));
@@ -22,49 +32,66 @@ public class HttpPersonProvider : IPersonProvider
         }
         catch (HttpRequestException e)
         {
-            Console.WriteLine($"{url} not found");
-            return null;
+            _logger.LogInformation($"{url} not found", DateTimeOffset.UtcNow);
+            throw new DataNotFoundException(url, e);
         }
 
         return json;
     }
-    private async Task<string?> GetEpisode(string name)
+
+    private async Task<string> GetEpisode(string name)
     {
         var json = await GetResponseUrl(
-                $"https://rickandmortyapi.com/api/episode?name={name}");
+            $"episode?name={name}");
 
         return json;
     }
-    
-    private async Task<string?> GetRickAndMortyCharacter(string name)
+
+    private async Task<string> GetRickAndMortyCharacter(string name, int page = 1)
     {
-        string? json = await GetResponseUrl($"https://rickandmortyapi.com/api/character/?name={name}");
+        string json = await GetResponseUrl($"character/?page={page}&name={name}");
         return json;
     }
-    public async Task<bool?> CheckPerson(string personName, string episodeName)
+
+    private async Task<IEnumerable<int>> GetAllEpisodesIdsForName(string name)
     {
-        string? jsonPersons = await GetRickAndMortyCharacter(personName);
-        if (jsonPersons == null)
-        {
-            return null;
-        }
+        var jsonPersons = await GetRickAndMortyCharacter(name);
         JObject jobjectPersons = JObject.Parse(jsonPersons);
-        var episodes = jobjectPersons["results"]!.SelectMany(x => x["episode"]!);
-        var ids = ParseIds(episodes);
-        var jsonEpisode = await GetEpisode(episodeName);
-        if (jsonEpisode == null)
+        var info = (JObject)jobjectPersons["info"]!;
+        var pages = info["pages"]!.Value<int>();
+        var episodes = new List<JToken>();
+
+        for (int i = 2; i < pages; i++)
         {
-            return null;
+            var episodesFromPage = ParseResults(jobjectPersons).SelectMany(x => x["episode"]!);
+            episodes.AddRange(episodesFromPage);
+            jsonPersons = await GetRickAndMortyCharacter(name, i);
         }
+
+        var ids = ParseIds(episodes);
+        return ids;
+    }
+
+    private async Task<int> GetFirstEpisodeId(string episodeName)
+    {
+        var jsonEpisode = await GetEpisode(episodeName);
         JObject jobjectEpisodes = JObject.Parse(jsonEpisode);
-        JObject jEpisode = (JObject)jobjectEpisodes["results"]!.First!;
-        var id = Int32.Parse(jEpisode["id"]!.ToString());
-        int? episodeId = ids.Cast<int?>().FirstOrDefault(index => id == index);
-        
+        var jEpisode = ParseResults(jobjectEpisodes).First!;
+        var id = jEpisode["id"]!.Value<int>();
+        return id;
+    }
+
+    public async Task<bool> CheckPerson(string personName, string episodeName)
+    {
+        var ids = await GetAllEpisodesIdsForName(personName);
+        var id = await GetFirstEpisodeId(episodeName);
+        var episodeId = ids.Cast<int?>().FirstOrDefault(index => id == index);
+
         if (episodeId == null)
         {
             return false;
         }
+
         return true;
     }
 
@@ -76,41 +103,40 @@ public class HttpPersonProvider : IPersonProvider
             var url = characterUrl.ToString();
             var elements = url.Split(@"/");
             var idStr = elements[elements.Length - 1];
-            int id= 0;
+            int id = 0;
             try
             {
                 id = Int32.Parse(idStr);
             }
             catch (FormatException ex)
             {
-                Console.WriteLine(ex.Message);
+                _logger.LogInformation(ex.Message, DateTimeOffset.UtcNow);
             }
+
             ids.Add(id);
         }
 
         return ids;
     }
 
-    private async Task<FullOriginDTO?> GetOrigin(string url)
+    private async Task<FullOriginDTO> GetOrigin(string url)
     {
         var origin = await GetResponseUrl(url);
-        if (origin == null)
-        {
-            return null;
-        }
         var fullOrigin = JsonConvert.DeserializeObject<FullOriginDTO>(origin);
         return fullOrigin;
     }
 
-    public async Task<PersonDTO?> GetPerson(string name)
+    private JToken ParseResults(JObject json)
+    {
+        var results = json["results"]!;
+        return results;
+    }
+
+    public async Task<PersonDTO> GetPerson(string name)
     {
         var json = await GetRickAndMortyCharacter(name);
-        if (json == null)
-        {
-            return null;
-        }
         var jsonPersons = JObject.Parse(json);
-        var jPerson = (JObject)jsonPersons["results"]!.First!;
+        var jPerson = ParseResults(jsonPersons).First!;
         var personDTO = JsonConvert.DeserializeObject<PersonDTO>(jPerson.ToString());
         personDTO!.FullOrigin = await GetOrigin(personDTO.Origin.Url);
         return personDTO;

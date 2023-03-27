@@ -16,14 +16,14 @@ public class PersonService : IPersonService
         _mapper = mapper;
     }
 
-    public async Task<Person?> GetPerson(string name)
+    public async Task<Person> GetPerson(string name)
     {
-        PersonDTO? personDTO = await _personProvider.GetPerson(name);
+        var personDTO = await _personProvider.GetPerson(name);
         var person = _mapper.Map<Person>(personDTO);
         return person;
     }
 
-    public async Task<bool?> CheckPerson(string personName, string episodeName)
+    public async Task<bool> CheckPerson(string personName, string episodeName)
     {
         var ifInEpisode = await _personProvider.CheckPerson(personName, episodeName);
         return ifInEpisode;

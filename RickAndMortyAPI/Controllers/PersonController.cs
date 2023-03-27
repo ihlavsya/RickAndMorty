@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using RickAndMortyAPI.BL;
+using RickAndMortyAPI.BL.Exceptions;
 using RickAndMortyAPI.ViewModels;
 
 namespace RickAndMortyAPI.Controllers;
@@ -8,12 +9,10 @@ namespace RickAndMortyAPI.Controllers;
 [Route("api/v1")]
 public class PersonController : ControllerBase
 {
-    private readonly ILogger<PersonController> _logger;
     private readonly IPersonService _personService;
 
-    public PersonController(ILogger<PersonController> logger, IPersonService personService)
+    public PersonController(IPersonService personService)
     {
-        _logger = logger;
         _personService = personService;
     }
 
@@ -21,23 +20,29 @@ public class PersonController : ControllerBase
     [Route("person")]
     public async Task<ActionResult<Person>> Get(string name)
     {
-        var person = await _personService.GetPerson(name);
-        if (person == null)
+        try
+        {
+            var person = await _personService.GetPerson(name);
+            return person;
+        }
+        catch (DataNotFoundException e)
         {
             return NotFound();
         }
-        return person;
     }
-    
+
     [HttpPost]
     [Route("check-person")]
     public async Task<ActionResult<bool>> CheckPerson(PersonEpisodeViewModel personEpisode)
     {
-        var ifInEpisode = await _personService.CheckPerson(personEpisode.PersonName, personEpisode.EpisodeName);
-        if (ifInEpisode == null)
+        try
+        {
+            var ifInEpisode = await _personService.CheckPerson(personEpisode.PersonName, personEpisode.EpisodeName);
+            return ifInEpisode;
+        }
+        catch (DataNotFoundException e)
         {
             return NotFound();
-        };
-        return ifInEpisode;
+        }
     }
 }

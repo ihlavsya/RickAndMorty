@@ -11,7 +11,8 @@ builder.Services.AddScoped<IPersonProvider, HttpPersonProvider>();
 builder.Services.AddScoped<IPersonService, PersonService>();
 builder.Services.AddMemoryCache();
 var sp = builder.Services.BuildServiceProvider();
-builder.Services.AddScoped<IPersonProvider>(c => new CachePersonDecorator(new HttpPersonProvider(), sp.GetService<IMemoryCache>(), sp.GetService<IMemoryCache>()));
+builder.Services.AddScoped<IPersonProvider>(c => new CachePersonDecorator(new HttpPersonProvider(sp.GetService<ILogger<HttpPersonProvider>>()), 
+    sp.GetService<IMemoryCache>()));
 builder.Services.AddMemoryCache();
 builder.Services.AddAutoMapper(typeof(RickAndMortyProfile));
 

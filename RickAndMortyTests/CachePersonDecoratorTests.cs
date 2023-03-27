@@ -2,7 +2,6 @@ using Microsoft.Extensions.Caching.Memory;
 using Moq;
 using RickAndMortyAPI.BL.Externals;
 using RickAndMortyAPI.BL.Interfaces;
-using RickAndMortyAPI.BL.Interfaces.Models;
 
 namespace RickAndMortyTests;
 
@@ -10,15 +9,10 @@ public class CachePersonDecoratorTests
 {
     private readonly IPersonProvider _cachePersonProvider;
     private Mock<IPersonProvider> _mockHttpPersonProvider;
-    BasePersonProviderDecorator _basePersonProviderDecorator;
     public CachePersonDecoratorTests()
     {
         _mockHttpPersonProvider = Consts.GetMockHttpProvider();
-        
-        _basePersonProviderDecorator = new BasePersonProviderDecorator(_mockHttpPersonProvider.Object);
-        
-        _cachePersonProvider = new CachePersonDecorator(_basePersonProviderDecorator, 
-            new MemoryCache(new MemoryCacheOptions()), 
+        _cachePersonProvider = new CachePersonDecorator(_mockHttpPersonProvider.Object,
             new MemoryCache(new MemoryCacheOptions()));
     }
     
